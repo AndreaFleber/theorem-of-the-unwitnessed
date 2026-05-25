@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Theorem of the Unwitnessed</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inconsolata:wght@300;400&display=swap');
+
+  :root {
+    --ink: #1a1410;
+    --paper: #f5f0e8;
+    --gold: #b8960c;
+    --rust: #8b3a1a;
+    --void: #0d0b08;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--void);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'EB Garamond', serif;
+    overflow: hidden;
+  }
+
+  .canvas {
+    width: 800px;
+    height: 800px;
+    background: var(--paper);
+    position: relative;
+    box-shadow: 0 0 120px rgba(184, 150, 12, 0.08), 0 0 400px rgba(0,0,0,0.9);
+    overflow: hidden;
+  }
+
+  /* aged paper texture */
+  .canvas::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+    background-size: 200px;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0.6;
+  }
+
+  /* burn edge vignette */
+  .canvas::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(30,20,10,0.35) 100%);
+    pointer-events: none;
+    z-index: 11;
+  }
+
+  /* ── STAVE SYSTEM ── */
+  .staff-system {
+    position: absolute;
+    top: 118px;
+    left: 60px;
+    right: 60px;
+  }
+
+  .staff {
+    position: relative;
+    height: 60px;
+    margin-bottom: 48px;
+  }
+
+  .staff-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: var(--ink);
+    opacity: 0.55;
+  }
+
+  /* ── SVG LAYER ── */
+  svg.main {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+  }
+
+  /* ── FORMULA BLOCK ── */
+  .formula-block {
+    position: absolute;
+    bottom: 72px;
+    left: 60px;
+    right: 60px;
+    border-top: 1px solid rgba(26,20,16,0.25);
+    padding-top: 18px;
+    z-index: 5;
+  }
+
+  .formula-main {
+    font-family: 'Inconsolata', monospace;
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--ink);
+    opacity: 0.7;
+    letter-spacing: 0.04em;
+    line-height: 1.9;
+  }
+
+  .formula-note {
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 11px;
+    color: var(--rust);
+    opacity: 0.6;
+    margin-top: 6px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── TITLE ── */
+  .title-block {
+    position: absolute;
+    top: 36px;
+    left: 60px;
+    z-index: 5;
+  }
+
+  .title-main {
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink);
+    opacity: 0.85;
+  }
+
+  .title-sub {
+    font-size: 11px;
+    font-style: italic;
+    color: var(--ink);
+    opacity: 0.4;
+    margin-top: 4px;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── MEASURE NUMBERS ── */
+  .measure-num {
+    font-family: 'Inconsolata', monospace;
+    font-size: 9px;
+    fill: var(--ink);
+    opacity: 0.3;
+  }
+
+  /* ── ANNOTATIONS ── */
+  .annotation {
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 11px;
+    fill: var(--rust);
+    opacity: 0.55;
+  }
+
+  /* ── WATERMARK ── */
+  .watermark {
+    position: absolute;
+    bottom: 24px;
+    right: 60px;
+    font-family: 'EB Garamond', serif;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--ink);
+    opacity: 0.2;
+    z-index: 5;
+    text-transform: uppercase;
+  }
+
+  /* ── ANIMATION ── */
+  @keyframes breathe {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 0.65; }
+  }
+  @keyframes drift {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-2px); }
+    100% { transform: translateY(0px); }
+  }
+  .anim-drift { animation: drift 8s ease-in-out infinite; }
+  .anim-breathe { animation: breathe 6s ease-in-out infinite; }
+
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <!-- TITLE -->
+  <div class="title-block">
+    <div class="title-main">Theorem of the Unwitnessed</div>
+    <div class="title-sub">for an instrument that has not yet been built — in a time signature that cannot be counted</div>
+  </div>
+
+  <!-- STAFF LINES (HTML) -->
+  <div class="staff-system">
+    <div class="staff" id="s1">
+      <div class="staff-line" style="top:0px"></div>
+      <div class="staff-line" style="top:10px"></div>
+      <div class="staff-line" style="top:20px"></div>
+      <div class="staff-line" style="top:30px"></div>
+      <div class="staff-line" style="top:40px"></div>
+    </div>
+    <div class="staff" id="s2">
+      <div class="staff-line" style="top:0px"></div>
+      <div class="staff-line" style="top:10px"></div>
+      <div class="staff-line" style="top:20px"></div>
+      <div class="staff-line" style="top:30px"></div>
+      <div class="staff-line" style="top:40px"></div>
+    </div>
+    <div class="staff" id="s3">
+      <div class="staff-line" style="top:0px"></div>
+      <div class="staff-line" style="top:10px"></div>
+      <div class="staff-line" style="top:20px"></div>
+      <div class="staff-line" style="top:30px"></div>
+      <div class="staff-line" style="top:40px"></div>
+    </div>
+    <div class="staff" id="s4">
+      <div class="staff-line" style="top:0px"></div>
+      <div class="staff-line" style="top:10px"></div>
+      <div class="staff-line" style="top:20px"></div>
+      <div class="staff-line" style="top:30px"></div>
+      <div class="staff-line" style="top:40px"></div>
+    </div>
+  </div>
+
+  <!-- MAIN SVG -->
+  <svg class="main" viewBox="0 0 800 800">
+    <defs>
+      <filter id="blur-soft">
+        <feGaussianBlur stdDeviation="0.6"/>
+      </filter>
+      <filter id="blur-ghost">
+        <feGaussianBlur stdDeviation="2"/>
+      </filter>
+    </defs>
+
+    <!-- ══ CLEF: a symbol that is neither treble nor bass ══ -->
+    <!-- a hybrid glyph: treble spiral + bass dots but mirrored into impossibility -->
+    <g transform="translate(68, 138)" opacity="0.75">
+      <!-- Vertical line -->
+      <line x1="0" y1="-18" x2="0" y2="52" stroke="#1a1410" stroke-width="1.8"/>
+      <!-- Spiral (treble-like but inverted) -->
+      <path d="M0,20 C18,10 22,-6 12,-14 C2,-22 -10,-18 -8,-8 C-6,2 4,6 8,0" 
+            stroke="#1a1410" stroke-width="1.4" fill="none"/>
+      <!-- Bass dots mirrored -->
+      <circle cx="10" cy="-2" r="2.2" fill="#1a1410"/>
+      <circle cx="10" cy="8" r="2.2" fill="#1a1410"/>
+      <!-- Extra impossible curve -->
+      <path d="M0,42 C-14,38 -14,22 0,22" 
+            stroke="#1a1410" stroke-width="1.4" fill="none"/>
+    </g>
+
+    <!-- ══ TIME SIGNATURE: irrational ══ -->
+    <text x="97" y="163" font-family="EB Garamond, serif" font-size="22" fill="#1a1410" opacity="0.8">√</text>
+    <text x="97" y="183" font-family="EB Garamond, serif" font-size="22" fill="#1a1410" opacity="0.8">π</text>
+    <!-- annotation -->
+    <text x="122" y="148" class="annotation">(≈ 1.7724…)</text>
+    <text x="122" y="160" class="annotation">non-integer pulse</text>
+
+    <!-- ══ MEASURE 1: Staff 1 (y≈138–178) ══ -->
+    <!-- bar line start -->
+    <line x1="68" y1="138" x2="68" y2="178" stroke="#1a1410" stroke-width="1.2" opacity="0.5"/>
+
+    <!-- NOTE HEADS — impossible noteheads: some are filled, some hollow, some are question marks, some are mathematical symbols -->
+    <!-- note 1: normal filled -->
+    <ellipse cx="158" cy="168" rx="6" ry="4.5" fill="#1a1410" transform="rotate(-15 158 168)" opacity="0.85"/>
+    <line x1="163" y1="168" x2="163" y2="128" stroke="#1a1410" stroke-width="1.3" opacity="0.85"/>
+
+    <!-- note 2: hollow (whole?) but with a stem — impossible -->
+    <ellipse cx="210" cy="158" rx="6.5" ry="4.5" fill="none" stroke="#1a1410" stroke-width="1.3" transform="rotate(-15 210 158)" opacity="0.85"/>
+    <line x1="215" y1="158" x2="215" y2="118" stroke="#1a1410" stroke-width="1.3" opacity="0.85"/>
+    <!-- flag on whole note — impossible -->
+    <path d="M215,118 C228,112 232,124 220,130" stroke="#1a1410" stroke-width="1.2" fill="none" opacity="0.75"/>
+
+    <!-- note 3: diamond notehead (col legno? extended technique?) -->
+    <polygon points="262,163 268,158 274,163 268,168" fill="#1a1410" opacity="0.8"/>
+    <line x1="268" y1="158" x2="268" y2="118" stroke="#1a1410" stroke-width="1.3" opacity="0.8"/>
+
+    <!-- note 4: X notehead -->
+    <text x="316" y="168" font-family="Inconsolata, monospace" font-size="13" fill="#1a1410" opacity="0.75">×</text>
+    <line x1="323" y1="163" x2="323" y2="123" stroke="#1a1410" stroke-width="1.3" opacity="0.75"/>
+
+    <!-- note 5: ∞ notehead -->
+    <text x="366" y="170" font-family="EB Garamond, serif" font-size="16" fill="#1a1410" opacity="0.7" font-style="italic">∞</text>
+
+    <!-- note 6: backwards notehead -->
+    <ellipse cx="426" cy="160" rx="6" ry="4.5" fill="#1a1410" transform="rotate(165 426 160)" opacity="0.8"/>
+    <line x1="420" y1="160" x2="420" y2="120" stroke="#1a1410" stroke-width="1.3" opacity="0.8"/>
+
+    <!-- note 7: ? notehead -->
+    <text x="468" y="168" font-family="EB Garamond, serif" font-size="15" fill="#1a1410" opacity="0.65" font-style="italic">?</text>
+
+    <!-- bar line mid 1 -->
+    <line x1="505" y1="138" x2="505" y2="178" stroke="#1a1410" stroke-width="1" opacity="0.4"/>
+
+    <!-- note 8: ∅ -->
+    <text x="516" y="170" font-family="EB Garamond, serif" font-size="16" fill="#1a1410" opacity="0.65">∅</text>
+
+    <!-- note 9: two stems, one notehead -->
+    <ellipse cx="560" cy="163" rx="6" ry="4.5" fill="#1a1410" transform="rotate(-15 560 163)" opacity="0.8"/>
+    <line x1="565" y1="163" x2="565" y2="123" stroke="#1a1410" stroke-width="1.3" opacity="0.8"/>
+    <line x1="555" y1="163" x2="555" y2="203" stroke="#1a1410" stroke-width="1.3" opacity="0.5"/>
+
+    <!-- note 10: ghosted -->
+    <ellipse cx="610" cy="158" rx="6" ry="4.5" fill="#1a1410" transform="rotate(-15 610 158)" opacity="0.2" filter="url(#blur-ghost)"/>
+    <line x1="615" y1="158" x2="615" y2="118" stroke="#1a1410" stroke-width="1.3" opacity="0.15"/>
+
+    <!-- bar line end 1 -->
+    <line x1="660" y1="138" x2="660" y2="178" stroke="#1a1410" stroke-width="1" opacity="0.4"/>
+
+    <!-- MEASURE NUMBER -->
+    <text x="68" y="132" class="measure-num">i</text>
+    <text x="505" y="132" class="measure-num">∞</text>
+
+    <!-- ══ ANNOTATION STAFF 1 ══ -->
+    <text x="150" y="120" class="annotation">suonare senza toccare</text>
+    <text x="400" y="120" class="annotation" font-size="9.5">ascoltare prima di nascere</text>
+    <text x="580" y="125" class="annotation" font-size="9">—</text>
+
+    <!-- ══ SLUR: impossible — closes on itself ══ -->
+    <path d="M158,173 C240,195 340,195 426,173 C340,155 240,155 158,173" 
+          stroke="#1a1410" stroke-width="1" fill="none" opacity="0.3"/>
+
+    <!-- ══ STAFF 2 (y≈246–286) ══ -->
+    <line x1="68" y1="246" x2="68" y2="286" stroke="#1a1410" stroke-width="1.2" opacity="0.5"/>
+
+    <!-- Clef: same glyph, reflected vertically -->
+    <g transform="translate(68,266) scale(1,-1)" opacity="0.6">
+      <line x1="0" y1="-18" x2="0" y2="52" stroke="#1a1410" stroke-width="1.8"/>
+      <path d="M0,20 C18,10 22,-6 12,-14 C2,-22 -10,-18 -8,-8 C-6,2 4,6 8,0" 
+            stroke="#1a1410" stroke-width="1.4" fill="none"/>
+      <circle cx="10" cy="-2" r="2.2" fill="#1a1410"/>
+      <circle cx="10" cy="8" r="2.2" fill="#1a1410"/>
+      <path d="M0,42 C-14,38 -14,22 0,22" stroke="#1a1410" stroke-width="1.4" fill="none"/>
+    </g>
+
+    <!-- Staff 2: fermata over every note — impossible density -->
+    <!-- notes cluster -->
+    <g opacity="0.78">
+      <!-- chord: 5 noteheads stacked -->
+      <ellipse cx="160" cy="286" rx="6" ry="4.5" fill="#1a1410" transform="rotate(-12 160 286)"/>
+      <ellipse cx="160" cy="276" rx="6" ry="4.5" fill="#1a1410" transform="rotate(-12 160 276)"/>
+      <ellipse cx="160" cy="266" rx="6" ry="4.5" fill="#1a1410" transform="rotate(-12 160 266)"/>
+      <ellipse cx="160" cy="256" rx="6" ry="4.5" fill="#1a1410" transform="rotate(-12 160 256)"/>
+      <ellipse cx="160" cy="246" rx="6" ry="4.5" fill="#1a1410" transform="rotate(-12 160 246)"/>
+      <line x1="166" y1="286" x2="166" y2="206" stroke="#1a1410" stroke-width="1.4"/>
+      <!-- fermata -->
+      <path d="M150,236 C160,222 170,222 180,236" stroke="#1a1410" stroke-width="1.2" fill="none" opacity="0.6"/>
+      <circle cx="165" cy="234" r="2" fill="#1a1410" opacity="0.6"/>
+      <text x="158" y="244" font-size="8" fill="#1a1410" opacity="0.5" font-family="Inconsolata">∞</text>
+    </g>
+
+    <!-- second cluster — negative time -->
+    <g opacity="0.55">
+      <ellipse cx="280" cy="270" rx="6" ry="4.5" fill="none" stroke="#1a1410" stroke-width="1.3" transform="rotate(-12 280 270)"/>
+      <line x1="274" y1="270" x2="274" y2="310" stroke="#1a1410" stroke-width="1.3"/>
+      <!-- annotation: tempo retrograde -->
+      <text x="250" y="318" class="annotation" font-size="9.5">retrograde of itself</text>
+    </g>
+
+    <!-- tremolo across bar line — impossible -->
+    <g opacity="0.7">
+      <ellipse cx="450" cy="266" rx="6" ry="4.5" fill="#1a1410" transform="rotate(-12 450 266)"/>
+      <line x1="456" y1="266" x2="456" y2="226" stroke="#1a1410" stroke-width="1.3"/>
+      <!-- tremolo slashes on note inside clef -->
+      <line x1="446" y1="238" x2="466" y2="232" stroke="#1a1410" stroke-width="1.3"/>
+      <line x1="446" y1="243" x2="466" y2="237" stroke="#1a1410" stroke-width="1.3"/>
+      <line x1="446" y1="248" x2="466" y2="242" stroke="#1a1410" stroke-width="1.3"/>
+      <!-- tie across bar line to previous measure (line going backwards) -->
+      <path d="M450,271 C400,282 350,282 300,271" stroke="#1a1410" stroke-width="1" fill="none" stroke-dasharray="3,3" opacity="0.4"/>
+      <text x="370" y="286" class="annotation" font-size="9">legato to the past</text>
+    </g>
+
+    <!-- annotation staff 2 -->
+    <text x="68" y="240" class="annotation" font-size="9.5">Tempo: ⊥ (orthogonal to duration)</text>
+    <text x="500" y="240" class="annotation" font-size="9.5">pppppp — inaudible by definition</text>
+
+    <!-- ══ STAFF 3 (y≈354–394) ══ -->
+    <line x1="68" y1="354" x2="68" y2="394" stroke="#1a1410" stroke-width="1.2" opacity="0.5"/>
+
+    <!-- Mathematical intrusion: the staff becomes an equation mid-line -->
+    <!-- first half: normal notes -->
+    <g opacity="0.72">
+      <ellipse cx="130" cy="374" rx="6" ry="4.5" fill="#1a1410" transform="rotate(-12 130 374)"/>
+      <line x1="136" y1="374" x2="136" y2="334" stroke="#1a1410" stroke-width="1.3"/>
+      <ellipse cx="175" cy="364" rx="6" ry="4.5" fill="#1a1410" transform="rotate(-12 175 364)"/>
+      <line x1="181" y1="364" x2="181" y2="324" stroke="#1a1410" stroke-width="1.3"/>
+    </g>
+
+    <!-- staff lines dissolve into equation -->
+    <!-- equals sign spanning staff lines -->
+    <text x="218" y="365" font-family="Inconsolata, monospace" font-size="28" fill="#1a1410" opacity="0.55" filter="url(#blur-soft)">lim</text>
+    <text x="248" y="358" font-family="Inconsolata, monospace" font-size="10" fill="#1a1410" opacity="0.4">n→∅</text>
+    <text x="268" y="368" font-family="Inconsolata, monospace" font-size="20" fill="#1a1410" opacity="0.55" filter="url(#blur-soft)">∑</text>
+    <text x="292" y="354" font-family="Inconsolata, monospace" font-size="9" fill="#1a1410" opacity="0.35">n=−∞</text>
+    <text x="292" y="380" font-family="Inconsolata, monospace" font-size="9" fill="#1a1410" opacity="0.35">n=+∞</text>
+    <text x="310" y="368" font-family="EB Garamond, serif" font-size="16" fill="#1a1410" opacity="0.55" font-style="italic">f(♩)</text>
+    <text x="334" y="368" font-family="Inconsolata, monospace" font-size="18" fill="#1a1410" opacity="0.5">=</text>
+    <text x="354" y="368" font-family="EB Garamond, serif" font-size="16" fill="#1a1410" opacity="0.5" font-style="italic">silence</text>
+
+    <!-- staff lines resume after equation -->
+    <g opacity="0.72">
+      <ellipse cx="500" cy="374" rx="6" ry="4.5" fill="none" stroke="#1a1410" stroke-width="1.3" transform="rotate(-12 500 374)"/>
+      <line x1="506" y1="374" x2="506" y2="334" stroke="#1a1410" stroke-width="1.3"/>
+      <!-- ghost note -->
+      <ellipse cx="545" cy="364" rx="6" ry="4.5" fill="#1a1410" transform="rotate(-12 545 364)" opacity="0.15" filter="url(#blur-ghost)"/>
+      <line x1="551" y1="364" x2="551" y2="324" stroke="#1a1410" stroke-width="1.3" opacity="0.12"/>
+    </g>
+
+    <!-- the last note transforms into a dot that transforms into a prime symbol -->
+    <ellipse cx="610" cy="374" rx="6" ry="4.5" fill="#1a1410" transform="rotate(-12 610 374)" opacity="0.6"/>
+    <line x1="616" y1="374" x2="616" y2="334" stroke="#1a1410" stroke-width="1.3" opacity="0.6"/>
+    <!-- note morphing -->
+    <text x="624" y="345" font-family="EB Garamond, serif" font-size="24" fill="#1a1410" opacity="0.25" filter="url(#blur-ghost)">′</text>
+
+    <!-- annotation -->
+    <text x="68" y="348" class="annotation" font-size="9.5">the bar line dissolves into proof</text>
+    <text x="410" y="406" class="annotation" font-size="9.5">NB: resume from a measure that was never played</text>
+
+    <!-- ══ STAFF 4 (y≈462–502) ══ -->
+    <line x1="68" y1="462" x2="68" y2="502" stroke="#1a1410" stroke-width="1.2" opacity="0.5"/>
+
+    <!-- final staff: everything erases itself -->
+    <!-- notes with erasure marks through them -->
+    <g opacity="0.6">
+      <ellipse cx="150" cy="482" rx="6" ry="4.5" fill="#1a1410" transform="rotate(-12 150 482)"/>
+      <line x1="156" y1="482" x2="156" y2="442" stroke="#1a1410" stroke-width="1.3"/>
+      <!-- strikethrough -->
+      <line x1="136" y1="474" x2="168" y2="490" stroke="var(--paper)" stroke-width="3"/>
+      <line x1="136" y1="474" x2="168" y2="490" stroke="#1a1410" stroke-width="1" opacity="0.5"/>
+    </g>
+
+    <!-- a note that is also a rest (superposition) -->
+    <g opacity="0.65" transform="translate(220, 472)">
+      <ellipse cx="0" cy="0" rx="6" ry="4.5" fill="#1a1410" transform="rotate(-12)"/>
+      <line x1="6" y1="0" x2="6" y2="-40" stroke="#1a1410" stroke-width="1.3"/>
+      <!-- rest symbol overlaid -->
+      <text x="-8" y="-18" font-family="EB Garamond, serif" font-size="18" fill="#1a1410" opacity="0.4">𝄽</text>
+      <!-- annotation -->
+      <text x="-14" y="20" class="annotation" font-size="9">superposition</text>
+    </g>
+
+    <!-- the final barline splits into two parallel universes -->
+    <line x1="680" y1="462" x2="680" y2="502" stroke="#1a1410" stroke-width="1.2" opacity="0.5"/>
+    <line x1="685" y1="462" x2="685" y2="502" stroke="#1a1410" stroke-width="1.2" opacity="0.5"/>
+    <!-- one extends upward -->
+    <line x1="680" y1="462" x2="680" y2="420" stroke="#1a1410" stroke-width="0.8" opacity="0.2" stroke-dasharray="2,4"/>
+    <!-- one extends downward -->
+    <line x1="685" y1="502" x2="685" y2="544" stroke="#1a1410" stroke-width="0.8" opacity="0.2" stroke-dasharray="2,4"/>
+
+    <!-- annotation: the final note is missing -->
+    <text x="550" y="455" class="annotation" font-size="9.5">[nota finale: vedi verso opposto del foglio]</text>
+
+    <!-- ══ FINAL BAR / DOUBLE BAR: impossible ══ -->
+    <!-- a double barline that loops back -->
+    <line x1="722" y1="138" x2="722" y2="502" stroke="#1a1410" stroke-width="2.5" opacity="0.5"/>
+    <line x1="727" y1="138" x2="727" y2="502" stroke="#1a1410" stroke-width="1" opacity="0.4"/>
+    <!-- arrow looping back to start -->
+    <path d="M725,320 C760,320 760,140 725,140" stroke="#1a1410" stroke-width="0.9" fill="none" 
+          stroke-dasharray="3,3" opacity="0.22"/>
+    <text x="740" y="318" class="annotation" font-size="9">D.C. al niente</text>
+
+    <!-- ══ OVERALL DYNAMIC MARKING ══ -->
+    <text x="68" y="545" font-family="EB Garamond, serif" font-style="italic" font-size="28" fill="#1a1410" opacity="0.35">ppppp∞</text>
+    <text x="195" y="545" class="annotation" font-size="9.5">(softer than the absence of sound)</text>
+
+    <!-- pedal marking that goes backwards -->
+    <text x="68" y="562" font-family="EB Garamond, serif" font-size="14" fill="#1a1410" opacity="0.3">𝄌──────────────────────────────────𝄌</text>
+    <text x="68" y="574" class="annotation" font-size="9">hold pedal before pressing key</text>
+
+    <!-- ══ PERFORMANCE INSTRUCTION ══ -->
+    <text x="68" y="596" font-family="EB Garamond, serif" font-style="italic" font-size="11.5" fill="#1a1410" opacity="0.5">
+      Eseguire in assenza dell'esecutore. Interrompere prima dell'inizio.
+    </text>
+
+  </svg>
+
+  <!-- FORMULA BLOCK -->
+  <div class="formula-block">
+    <div class="formula-main">
+      T(ω) := { x ∈ ∅ | x ∉ x } → Ψ(silence) &nbsp;·&nbsp; e^(iπ) &nbsp;·&nbsp; lim<sub>t→−∞</sub> ∫∫ f(♩, ♪) dt<br>
+      where &nbsp; Ψ(silence) = undefined &nbsp;∧&nbsp; f(♩, ♪) ∈ ℂ \ ℝ &nbsp;∧&nbsp; t &lt; 0 &nbsp;∀ t
+    </div>
+    <div class="formula-note">
+      * La presente equazione non può essere risolta, non può essere approssimata, e non può essere dimenticata.
+    </div>
+  </div>
+
+  <!-- WATERMARK -->
+  <div class="watermark">Op. ℵ₀ &nbsp;·&nbsp; Autore: nessuno &nbsp;·&nbsp; Anno: prima del tempo</div>
+
+</div>
+
+<script>
+  // Subtle breathing animation on canvas
+  const canvas = document.querySelector('.canvas');
+  let t = 0;
+  function tick() {
+    t += 0.005;
+    const v = Math.sin(t) * 0.5 + 99.5;
+    canvas.style.filter = `brightness(${v}%)`;
+    requestAnimationFrame(tick);
+  }
+  tick();
+</script>
+</body>
+</html>
